@@ -12,9 +12,9 @@ pub struct Payement {
 }
 
 impl Payement {
-    pub fn new(name: String, price: f32, description: String, paid_by: User) -> Payement{
+    pub fn new(name: String, price: f32, description: String, paid_by: User) -> Self {
         assert!(price > 0.0, "Price < 0");
-        Payement {
+        Self {
             name,
             price,
             description,

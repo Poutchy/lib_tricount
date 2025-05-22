@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use ordered_float::OrderedFloat;
 use serde::Serialize;
 
 use super::{
@@ -7,11 +8,17 @@ use super::{
     user::User
 };
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize)]
 pub struct Reimbursement {
     from: User,
     to: User,
-    amount: f32,
+    amount: OrderedFloat<f32>,
+}
+
+impl Reimbursement {
+    pub fn new(from: User, to: User, amount: f32) -> Self {
+        Reimbursement { from, to, amount: OrderedFloat(amount) }
+    }
 }
 
 impl Group {
@@ -28,15 +35,14 @@ impl Group {
 
         // 2. Séparer les débiteurs et les créanciers
         let mut debtors: Vec<(&User, f32)> = balances.iter()
-            .filter(|&(_, balance)| *balance < 0.0)
-            .map(|(user, &balance)| (*user, -balance)) // montant positif à payer
+            .filter(|&(_, balance)| *balance > 0.0)   // negative = detenteur d'argent
+            .map(|(user, &balance)| (*user, balance)) // montant positif à payer
             .collect();
-
+
         let mut creditors: Vec<(&User, f32)> = balances.iter()
-            .filter(|&(_, balance)| *balance > 0.0)
-            .map(|(user, &balance)| (*user, balance))
+            .filter(|&(_, balance)| *balance < 0.0)  // positive = doit payer
+            .map(|(user, &balance)| (*user, -balance))
             .collect();
-
         // 3. Calculer les remboursements
         let mut reimbursements = Vec::new();
 
@@ -48,11 +54,11 @@ impl Group {
             // montant remboursé est le minimum entre dette et crédit
             let payment = debt_amount.min(credit_amount);
 
-            reimbursements.push(Reimbursement {
-                from: debtor.clone(),
-                to: creditor.clone(),
-                amount: payment,
-            });
+            reimbursements.push(Reimbursement::new(
+                debtor.clone(),
+                creditor.clone(),
+                payment,
+            ));
 
             // réduire les soldes restants
             debt_amount -= payment;

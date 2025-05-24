@@ -4,11 +4,11 @@ use super::user::User;
 
 #[derive(Debug, Serialize)]
 pub struct Payement {
-    name: String,
-    price: f32,
-    description: String,
-    paid_by: User,
-    beneficiaries: Vec<User>    
+    pub name: String,
+    pub price: f32,
+    pub description: String,
+    pub paid_by: User,
+    pub beneficiaries: Vec<User>    
 }
 
 impl Payement {
@@ -25,17 +25,5 @@ impl Payement {
 
     pub fn add_beneficiaries(&mut self, user: User) {
         self.beneficiaries.push(user);
-    }
-
-    pub fn price(&self) -> &f32 {
-        &self.price
-    }
-
-    pub fn paid_by(&self) -> &User {
-        &self.paid_by
-    }
-
-    pub fn beneficiaries(&self) -> &[User] {
-        &self.beneficiaries
     }
 }

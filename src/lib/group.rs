@@ -27,14 +27,18 @@ impl Group {
         let mut plus: HashMap<&User, f32> = HashMap::new();
         let mut minus: HashMap<&User, f32> = HashMap::new();
         for user in &self.users {
-            plus.insert(&user, 0.0);
-            minus.insert(&user, 0.0);
+            plus.insert(user, 0.0);
+            minus.insert(user, 0.0);
         }
         for payement in self.payements.iter() {
-            *plus.get_mut(&payement.paid_by).unwrap() += payement.price;
+            if let Some(entry) = plus.get_mut(&payement.paid_by) {
+                *entry += payement.price;
+            }
             for person in &payement.beneficiaries {
                 if person.name != payement.paid_by.name {
-                    *minus.get_mut(&person).unwrap() -= payement.price;
+                    if let Some(entry) = minus.get_mut(&person) {
+                        *entry -= payement.price;
+                    }
                 }
             }
             total += payement.price;
@@ -81,17 +85,23 @@ impl Group {
             if user_is_beneficiaries {
                 for beneficiary in beneficiaries {
                     if beneficiary.name != user.name && payer.name == user.name {
-                        *balances.get_mut(&beneficiary.name).unwrap() -= share;
+                        if let Some(entry) = balances.get_mut(&beneficiary.name) {
+                            *entry -= share;
+                        }
                     }
 
                     if beneficiary.name == user.name && payer.name != user.name {
-                        *balances.get_mut(&payer.name).unwrap() += share;
+                        if let Some(entry) = balances.get_mut(&payer.name) { 
+                            *entry += share;
+                        }
                     }
                     
                 }
             } else if payer.name == user.name {
                 for beneficiary in beneficiaries {
-                    *balances.get_mut(&beneficiary.name).unwrap() -= share;
+                    if let Some(entry) = balances.get_mut(&beneficiary.name) {
+                        *entry -= share;
+                    }
                 }
             }
         }
@@ -113,7 +123,7 @@ impl Group {
 
         let mut balances: HashMap<&User, f32> = HashMap::new();
         for user in &self.users {
-            balances.insert(&user, self.compute_debt_for_user(user.clone())); 
+            balances.insert(user, self.compute_debt_for_user(user.clone())); 
             // positive = dette utilisateur envers groupe, negative = crédit
         }
 
@@ -131,10 +141,7 @@ impl Group {
         let mut reimbursements = Vec::new();
 
         // tant qu'il y a des dettes et des crédits
-        while !debtors.is_empty() && !creditors.is_empty() {
-            let (debtor, mut debt_amount) = debtors.pop().unwrap();
-            let (creditor, mut credit_amount) = creditors.pop().unwrap();
-
+        while let (Some((debtor, mut debt_amount)), Some((creditor, mut credit_amount))) = (debtors.pop(), creditors.pop()) {
             // montant remboursé est le minimum entre dette et crédit
             let payment = debt_amount.min(credit_amount);
 

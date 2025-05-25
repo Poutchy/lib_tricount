@@ -35,7 +35,7 @@ impl Group {
                 *entry += payement.price;
             }
             for person in &payement.beneficiaries {
-                if person.name != payement.paid_by.name {
+                if *person != payement.paid_by {
                     if let Some(entry) = minus.get_mut(&person) {
                         *entry -= payement.price;
                     }
@@ -69,7 +69,7 @@ impl Group {
         let mut balances: HashMap<String, f32> = HashMap::new();
 
         for other_user in &self.users {
-            if other_user.name != user.name {
+            if *other_user != user {
                 balances.insert(other_user.name.to_string(), 0.0);
             }
         }
@@ -84,20 +84,20 @@ impl Group {
 
             if user_is_beneficiaries {
                 for beneficiary in beneficiaries {
-                    if beneficiary.name != user.name && payer.name == user.name {
+                    if *beneficiary != user && *payer == user {
                         if let Some(entry) = balances.get_mut(&beneficiary.name) {
                             *entry -= share;
                         }
                     }
 
-                    if beneficiary.name == user.name && payer.name != user.name {
+                    if *beneficiary == user && *payer != user {
                         if let Some(entry) = balances.get_mut(&payer.name) { 
                             *entry += share;
                         }
                     }
                     
                 }
-            } else if payer.name == user.name {
+            } else if *payer == user {
                 for beneficiary in beneficiaries {
                     if let Some(entry) = balances.get_mut(&beneficiary.name) {
                         *entry -= share;
